@@ -1,1 +1,52 @@
-<p>duplicates-excel works!</p>
+<div class="container mt-4">
+    <h1 class="mb-3">Détection de doublons - Excel/CSV</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-8 mb-3">
+            <label for="file" class="form-label">Sélectionner le fichier</label>
+            <input type="file" id="file" class="form-control" (change)="onFileChange($event)">
+        </div>
+
+        <div class="col-md-4 mb-3 d-flex align-items-end">
+            <button class="btn btn-primary w-100" (click)="submitDuplicates()" [disabled]="isLoading">
+                {{ isLoading ? 'Analyse en cours...' : 'Rechercher les doublons' }}
+            </button>
+        </div>
+    </div>
+
+    <h3 class="mb-4">Résultats des recherches:</h3>
+
+    <div class="table-responsive shadow-sm rounded mt-4">
+        <table *ngIf="duplicates && duplicates.length > 0" class="table table-hover table-bordered align-middle border">
+            <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Matricule</th>
+                <th>Nom & Prénom</th>
+                <th>ID personne</th>
+                <th>Date de Naissance</th>
+                <th>Nombre de doublons</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let item of duplicates; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ item.matricule }}</td>
+                <td>{{ item.nom_prenom }}</td>
+                <td>
+                    <span class="badge bg-info text-white fs-6">{{ item.id_personne || '-' }}</span>  
+                </td>
+                <td>{{ formatDate(item.date_naissance) }}</td>
+                <td>
+                    <span class="badge bg-danger fs-6">{{ item.nombre_doublons }}</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>    
+    </div>
+
+    <!-- Message si aucun doublon -->
+    <div *ngIf="!duplicates || duplicates.length === 0" class="alert alert-success mt-3">
+        Aucun doublon détecté
+    </div>
+</div>

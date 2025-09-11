@@ -1,6 +1,6 @@
 
 <div class="container mt-5">
-  <h2 class="mb-4">Comparer des fichiers Excel/CSV</h2>
+  <h1 class="mb-4">Comparaison de fichiers - Excel/CSV</h1>
 
   <div class="row">
     <div class="col-4 mb-3">
@@ -23,7 +23,7 @@
 
 <!-- Résultats -->
 <div class="container mt-4">
-  <h2 class="mb-4">Résultats de la comparaison</h2>
+  <h2 class="mb-4">Résultats de la comparaison:</h2>
 
   <div *ngIf="results; else noData">
 
@@ -68,12 +68,7 @@
 
     <!-- Tab contents -->
     <div class="tab-content mt-3">
-      <div class="tab-pane fade table-responsive shadow-sm rounded" 
-          *ngFor="let tab of tabs; let i = index" 
-          [class.show]="i === 0" 
-          [class.active]="i === 0" 
-          [id]="tab.id" 
-          role="tabpanel">
+      <div class="tab-pane fade table-responsive shadow-sm rounded" *ngFor="let tab of tabs; let i = index" [class.show]="i === 0" [class.active]="i === 0" [id]="tab.id" role="tabpanel">
 
         <!-- Cas same_name_diff_matricule -->
         <table *ngIf="tab.type === 'same'" class="table table-bordered table-hover align-middle">
@@ -93,16 +88,13 @@
               <td>{{ isArray(item.matricule_df1) ? item.matricule_df1.join(' / ') : item.matricule_df1 }}</td>
               <td>{{ isArray(item.matricule_df2) ? item.matricule_df2.join(' / ') : item.matricule_df2 }}</td>
               <td>
-                    <span class="badge bg-warning text-dark"
-                          *ngIf="item.matricule_df1 != item.matricule_df2">
+                    <span class="badge bg-warning text-dark" *ngIf="item.matricule_df1 != item.matricule_df2">
                       Conflit
                     </span>
                     <!-- Badge Doublons -->
-                    <span class="badge bg-secondary ms-3"
-                          *ngIf="isArray(item.matricule_df1) || isArray(item.matricule_df2)">
+                    <span class="badge bg-secondary ms-3" *ngIf="isArray(item.matricule_df1) || isArray(item.matricule_df2)">
                       Doublons
                     </span>
-
               </td>
             </tr>
           </tbody>
@@ -127,7 +119,53 @@
         </table>
 
         <!-- Cas diff_line_by_line -->
-        <table *ngIf="tab.type === 'diffs'" class="table table-bordered table-hover align-middle">
+         <div *ngIf="tab.type === 'diffs'">
+            <div class="alert alert-info small mb-3">
+                Liste des différences détectées <strong>colonne par colonne</strong> 
+                entre les deux fichiers. Les enregistrements sont <strong>regroupés par matricule</strong>.
+            </div>
+
+           <div class="accordion mt-4" id="accordionDiffs">
+             <div class="accordion-item" *ngFor="let group of pagedDiffs; let i = index">
+               <h2 class="accordion-header" id="heading{{ i }}">
+                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        [attr.data-bs-target]="'#collapse' + (i + (currentPage - 1) * pageSize)"
+                        aria-expanded="false"
+                        [attr.aria-controls]="'collapse' + (i + (currentPage - 1) * pageSize)">
+                  <span class="me-2 text-muted">&nbsp;{{ (currentPage - 1) * pageSize + i + 1 }}.</span>
+                  Matricule : &nbsp;<span class="fw-bold ms-1">{{ group.key }}</span>
+                  <span class="badge bg-warning ms-3">{{ group.differences.length }} différences</span>
+                </button>
+               </h2>
+               <div [id]="'collapse' + (i + (currentPage - 1) * pageSize)" 
+                   class="accordion-collapse collapse"
+                   [attr.aria-labelledby]="'heading' + (i + (currentPage - 1) * pageSize)"
+                   data-bs-parent="#accordionDiffs">
+                 <div class="accordion-body">
+                   <table class="table table-sm table-striped align-middle">
+                     <thead class="table-dark">
+                       <tr>
+                         <th>Colonne</th>
+                         <th>Valeur dans {{ file1Name }}</th>
+                         <th>Valeur dans {{ file2Name }}</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       <tr *ngFor="let diff of group.differences">
+                         <td>{{ diff.column }}</td>
+                         <td>{{ diff.df1_value }}</td>
+                         <td>{{ diff.df2_value }}</td>
+                       </tr>
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+
+
+        <!-- <table *ngIf="tab.type === 'diffs'" class="table table-bordered table-hover align-middle">
           <thead class="table-dark">
             <tr>
               <th>#</th>
@@ -146,7 +184,7 @@
               <td>{{ item.df2_value }}</td>
             </tr>
           </tbody>
-        </table>
+        </table> -->
 
       </div>
     </div>

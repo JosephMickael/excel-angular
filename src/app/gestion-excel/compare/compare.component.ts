@@ -12,7 +12,6 @@ import { PaginationServiceService } from '../../services/pagination/pagination-s
 })
 export class CompareComponent implements OnInit {
   loading = false;
-  // results: any[] = [];
   results: any;
 
   file1: File | null = null;
@@ -31,6 +30,9 @@ export class CompareComponent implements OnInit {
 
   pageSize = 50;   // nombre de lignes par page
   currentPage = 1;
+
+  groupedDiffs: any[] = [];
+  pagedDiffs: any[] = [];
 
   constructor(private comparisonService: ComparisonService, private paginationService: PaginationServiceService) { }
 
@@ -65,61 +67,63 @@ export class CompareComponent implements OnInit {
   }
 
   async comparer() {
-  if (!this.file1 || !this.file2) return;
-  this.isLoading = true;
+    if (!this.file1 || !this.file2) return;
+    this.isLoading = true;
 
-  this.comparisonService.compareFiles(this.file1, this.file2).subscribe({
-    next: (result: any) => {
-      console.log("Réponse API :", result);
+    this.comparisonService.compareFiles(this.file1, this.file2).subscribe({
+      next: (result: any) => {
+        console.log("Réponse API :", result);
 
-      this.results = result;
+        this.results = result.report;
 
-      // vide les anciens onglets
-      this.tabs = [];
+        // vide les anciens onglets
+        this.tabs = [];
 
-      const report = result.report;
+        const report = result.report;
 
-      // Same
-      if (report.same_name_diff_matricule?.length) {
-        this.tabs.push({
-          id: 'same',
-          title: 'Noms identiques / matricules différents',
-          data: report.same_name_diff_matricule,
-          type: 'same'
-        });
-      }
+        // Same
+        if (report.same_name_diff_matricule?.length) {
+          this.tabs.push({
+            id: 'same',
+            title: 'Noms identiques / matricules différents',
+            data: report.same_name_diff_matricule,
+            type: 'same'
+          });
+        }
 
-      // missing1
-      if (report.missing_in_df1?.length) {
-        this.tabs.push({
-          id: 'missing1',
-          title: 'Manquants dans ' + this.file1Name,
-          data: report.missing_in_df1,
-          type: 'missing1'
-        });
-      }
+        // missing1
+        if (report.missing_in_df1?.length) {
+          this.tabs.push({
+            id: 'missing1',
+            title: 'Manquants dans ' + this.file1Name,
+            data: report.missing_in_df1,
+            type: 'missing1'
+          });
+        }
 
-      // missing2
-      if (report.missing_in_df2?.length) {
-        this.tabs.push({
-          id: 'missing2',
-          title: 'Manquants dans ' + this.file2Name,
-          data: report.missing_in_df2,
-          type: 'missing2'
-        });
-      }
+        // missing2
+        if (report.missing_in_df2?.length) {
+          this.tabs.push({
+            id: 'missing2',
+            title: 'Manquants dans ' + this.file2Name,
+            data: report.missing_in_df2,
+            type: 'missing2'
+          });
+        }
 
-      if (report.diff_line_by_line?.length) {
-        this.tabs.push({
-          id: 'diffs',
-          title: 'Différences ligne par ligne',
-          data: report.diff_line_by_line,
-          type: 'diffs'
-        });
-      }
+        if (report.diff_line_by_line?.length) {
+          this.groupedDiffs = this.groupDiffsByKey(report.diff_line_by_line);
+          this.updatePagedDiffs();
+          this.tabs.push({
+            id: 'diffs',
+            title: 'Différences colonne par colonne',
+            data: report.diff_line_by_line,
+            type: 'diffs'
+          });
+        }
 
-      this.isLoading = false;
-    },
+        this.isLoading = false;
+      },
       error: (err) => {
         console.error(err);
         this.isLoading = false;
@@ -144,6 +148,7 @@ export class CompareComponent implements OnInit {
   changePage(page: number) {
     if (page >= 1 && page <= this.getTotalPages()) {
       this.currentPage = page;
+      this.updatePagedDiffs();
     }
   }
 
@@ -151,6 +156,34 @@ export class CompareComponent implements OnInit {
   getVisiblePages(): (number | string)[] {
     return this.paginationService.getVisiblePages(this.currentPage, this.getTotalPages());
   }
+
+  updatePagedDiffs() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.pagedDiffs = this.groupedDiffs.slice(start, end);
+  }
+
+
+  groupDiffsByKey(differences: any[]): any[] {
+    const map = new Map<string, any[]>();
+
+    differences.forEach(diff => {
+      if (!map.has(diff.key)) {
+        map.set(diff.key, []);
+      }
+      map.get(diff.key)!.push(diff);
+    });
+
+    return Array.from(map.entries()).map(([key, diffs]) => ({
+      key,
+      differences: diffs
+    }));
+  }
+
+  isReportEmpty(report: any): boolean {
+    return !report || Object.keys(report).length === 0;
+  }
+
 
 
 }
