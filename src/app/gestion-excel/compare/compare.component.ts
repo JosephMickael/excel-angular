@@ -16,9 +16,11 @@ export class CompareComponent implements OnInit {
 
   file1: File | null = null;
   file2: File | null = null;
+  file3: File | undefined;
 
   file1Name: string | null = null;
   file2Name: string | null = null;
+  file3Name: string | null = null;
 
   isLoading = false;
 
@@ -33,6 +35,8 @@ export class CompareComponent implements OnInit {
 
   groupedDiffs: any[] = [];
   pagedDiffs: any[] = [];
+
+  presenceMatrix: any[] = [];
 
   constructor(private comparisonService: ComparisonService, private paginationService: PaginationServiceService) { }
 
@@ -55,6 +59,14 @@ export class CompareComponent implements OnInit {
     }
   }
 
+  onFile3Change(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.file3 = file;
+      this.file3Name = file.name;
+    }
+  }
+
   // conversion en array de l'objet
   toArray(data: any): any {
     if (!data) return [];
@@ -70,7 +82,7 @@ export class CompareComponent implements OnInit {
     if (!this.file1 || !this.file2) return;
     this.isLoading = true;
 
-    this.comparisonService.compareFiles(this.file1, this.file2).subscribe({
+    this.comparisonService.compareFiles(this.file1, this.file2, this.file3).subscribe({
       next: (result: any) => {
         console.log("Réponse API :", result);
 
@@ -80,6 +92,9 @@ export class CompareComponent implements OnInit {
         this.tabs = [];
 
         const report = result.report;
+
+        console.log("Missing df1 :", report.missing_in_df1);
+
 
         // Same
         if (report.same_name_diff_matricule?.length) {
@@ -91,26 +106,22 @@ export class CompareComponent implements OnInit {
           });
         }
 
-        // missing1
-        if (report.missing_in_df1?.length) {
+
+        // Pour les manquants 
+        if (report.missing_in_df1?.length || report.missing_in_df2?.length || report.missing_in_df3?.length) {
           this.tabs.push({
-            id: 'missing1',
-            title: 'Manquants dans ' + this.file1Name,
-            data: report.missing_in_df1,
-            type: 'missing1'
+            id: 'missing',
+            title: 'Manquants',
+            type: 'missing',
+            data: {
+              df1: this.simplifyMissing(report.missing_in_df1),
+              df2: this.simplifyMissing(report.missing_in_df2),
+              df3: this.simplifyMissing(report.missing_in_df3)
+            }
           });
         }
 
-        // missing2
-        if (report.missing_in_df2?.length) {
-          this.tabs.push({
-            id: 'missing2',
-            title: 'Manquants dans ' + this.file2Name,
-            data: report.missing_in_df2,
-            type: 'missing2'
-          });
-        }
-
+        // Diff colonne / colonne
         if (report.diff_line_by_line?.length) {
           this.groupedDiffs = this.groupDiffsByKey(report.diff_line_by_line);
           this.updatePagedDiffs();
@@ -138,8 +149,16 @@ export class CompareComponent implements OnInit {
     return Math.ceil(maxLength / this.pageSize);
   }
 
-  getPagedData(tab: any): any[] {
+  getPagedData(tab: any, subKey?: string): any[] {
     if (!tab.data) return [];
+
+    if (tab.type === 'missing' && subKey) {
+      const arr = tab.data[subKey] || [];
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return arr.slice(start, end);
+    }
+
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
     return tab.data.slice(start, end);
@@ -180,10 +199,32 @@ export class CompareComponent implements OnInit {
     }));
   }
 
+  // Vérifie si "report" existe dans le retour API (JSON)
   isReportEmpty(report: any): boolean {
     return !report || Object.keys(report).length === 0;
   }
 
+  // helpers pour la carte
+  hasConflict(item: any): boolean {
+    const sets = [item.df1, item.df2, item.df3]
+      .filter(arr => arr && arr.length > 0)
+      .map(arr => new Set(arr.map((x: any) => x.matricule)));
+    return sets.length > 1 && !sets.every(s => JSON.stringify([...s]) === JSON.stringify([...sets[0]]));
+  }
 
+  hasDuplicates(item: any): boolean {
+    return [item.df1, item.df2, item.df3].some(arr => arr && arr.length > 1);
+  }
+
+  
+
+  // pour les manquants
+  private simplifyMissing(arr: any[]): any[] {
+    return (arr || []).map(x => ({
+      nom_prenom: x.nom_prenom || "-",
+      matricule: x.matricule || "-",
+      date_naissance: x.date_naissance || x["date naissance"] || "-"
+    }));
+  }
 
 }

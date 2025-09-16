@@ -13,12 +13,14 @@ export class ComparisonService {
 
   constructor(private http: HttpClient) { }
 
-  compareFiles(file1: File, file2: File): Observable<any> {
+  compareFiles(file1: File, file2: File, file3?: File): Observable<any> {
     const formData = new FormData();
-    formData.append('file1', file1);
-    formData.append('file2', file2);
-
-    return this.http.post<any>(`${this.apiUrl}/compare/`, formData);
+    formData.append("file1", file1);
+    formData.append("file2", file2);
+    if (file3) {
+      formData.append("file3", file3);
+    }
+    return this.http.post(`${this.apiUrl}/compare`, formData);
   }
 
   setResult(data: any[]) {

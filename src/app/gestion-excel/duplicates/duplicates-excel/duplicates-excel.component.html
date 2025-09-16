@@ -1,52 +1,73 @@
 <div class="container mt-4">
-    <h1 class="mb-3">Détection de doublons - Excel/CSV</h1>
+    <h1 class="mb-4 text-center text-primary fw-bold">Détection de doublons</h1>
 
-    <div class="row mb-4">
-        <div class="col-md-8 mb-3">
-            <label for="file" class="form-label">Sélectionner le fichier</label>
-            <input type="file" id="file" class="form-control" (change)="onFileChange($event)">
+    <!-- Upload & bouton -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <label for="file" class="form-label fw-semibold">Sélectionner un fichier</label>
+            <input type="file" id="file" class="form-control shadow-sm" (change)="onFileChange($event)">
         </div>
-
-        <div class="col-md-4 mb-3 d-flex align-items-end">
-            <button class="btn btn-primary w-100" (click)="submitDuplicates()" [disabled]="isLoading">
-                {{ isLoading ? 'Analyse en cours...' : 'Rechercher les doublons' }}
+        <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary w-100 shadow-sm" (click)="submitDuplicates()" [disabled]="isLoading">
+                <i class="bi bi-search me-1"></i> {{ isLoading ? 'Analyse en cours...' : 'Rechercher' }}
             </button>
         </div>
     </div>
 
-    <h3 class="mb-4">Résultats des recherches:</h3>
+    <h4 class="mb-3 text-secondary">Résultats :</h4>
 
-    <div class="table-responsive shadow-sm rounded mt-4">
-        <table *ngIf="duplicates && duplicates.length > 0" class="table table-hover table-bordered align-middle border">
-            <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Matricule</th>
-                <th>Nom & Prénom</th>
-                <th>ID personne</th>
-                <th>Date de Naissance</th>
-                <th>Nombre de doublons</th>
-            </tr>
+    <!-- Résultats -->
+    <div *ngIf="duplicates && duplicates.length > 0" class="table-responsive rounded-3 shadow-sm">
+        <table class="table table-borderless align-middle">
+            <thead class="table-light border-bottom">
+                <tr>
+                    <th>#</th>
+                    <th>Matricule</th>
+                    <th>Nom & Prénom</th>
+                    <th>Date de Naissance</th>
+                    <th>Doublons</th>
+                    <th></th>
+                </tr>
             </thead>
+
             <tbody>
-            <tr *ngFor="let item of duplicates; let i = index">
-                <td>{{ i + 1 }}</td>
-                <td>{{ item.matricule }}</td>
-                <td>{{ item.nom_prenom }}</td>
-                <td>
-                    <span class="badge bg-info text-white fs-6">{{ item.id_personne || '-' }}</span>  
-                </td>
-                <td>{{ formatDate(item.date_naissance) }}</td>
-                <td>
-                    <span class="badge bg-danger fs-6">{{ item.nombre_doublons }}</span>
-                </td>
-            </tr>
+                <ng-container *ngFor="let item of duplicates; let i = index">
+                    <!-- Ligne principale -->
+                    <tr class="hover-row">
+                        <td class="fw-semibold text-muted">{{ i + 1 }}</td>
+                        <td class="fw-semibold">{{ item.matricule }}</td>
+                        <td>{{ item.nom_prenom }}</td>
+                        <td>{{ formatDate(item.date_naissance) }}</td>
+                        <td><span class="badge bg-danger">{{ item.nombre_doublons }}</span></td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse"
+                                [attr.data-bs-target]="'#collapse' + i" aria-expanded="false"
+                                [attr.aria-controls]="'collapse' + i">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Détails doublons -->
+                    <tr class="collapse bg-light" [id]="'collapse' + i">
+                        <td colspan="7" class="p-3">
+                            <ul class="list-group list-group-flush">
+                                <li *ngFor="let d of item.doublons" class="list-group-item small">
+                                    <i class="bi bi-people text-primary me-2"></i>
+                                    <strong>{{ d.matricule }}</strong> — {{ d.nom_prenom }} —
+                                    <span class="text-muted">{{ d.id_personne || '-' }}</span> —
+                                    {{ formatDate(d.date_naissance) }}
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                </ng-container>
             </tbody>
-        </table>    
+        </table>
     </div>
 
-    <!-- Message si aucun doublon -->
-    <div *ngIf="!duplicates || duplicates.length === 0" class="alert alert-success mt-3">
-        Aucun doublon détecté
+    <!-- Aucun résultat -->
+    <div *ngIf="!duplicates || duplicates.length === 0" class="alert alert-success text-center shadow-sm">
+        ✅ Aucun doublon détecté
     </div>
 </div>
