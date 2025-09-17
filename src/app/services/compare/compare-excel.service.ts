@@ -30,9 +30,4 @@ export class ComparisonService {
   getResult() {
     return this.result;
   }
-
-  private handleError(error: HttpErrorResponse) {
-    console.error('API error:', error);
-    return throwError(() => new Error(error.message || 'Server error'));
-  }
 }
