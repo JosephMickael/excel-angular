@@ -1,0 +1,18 @@
+/* Quand l'accordion est en train de s'ouvrir ou de se fermer */
+.collapsing {
+    transition: height 0.15s ease, opacity 0.15s ease !important;
+    opacity: 0.5;
+    /* optionnel */
+}
+
+/* Quand il est ouvert */
+.collapse.show {
+    transition: height 0.15s ease, opacity 0.15s ease !important;
+    opacity: 1;
+}
+
+/* Quand il est fermé */
+.collapse {
+    transition: height 0.15s ease, opacity 0.15s ease !important;
+    opacity: 0;
+}

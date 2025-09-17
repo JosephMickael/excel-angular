@@ -47,7 +47,7 @@ export class CompareComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       this.file1 = file;
-      this.file1Name = file.name; 
+      this.file1Name = file.name;
     }
   }
 
@@ -94,7 +94,8 @@ export class CompareComponent implements OnInit {
         const report = result.report;
 
         console.log("Missing df1 :", report.missing_in_df1);
-
+        console.log("Missing df2 :", report.missing_in_df2);
+        console.log("Missing df3 :", report.missing_in_df3);
 
         // Same
         if (report.same_name_diff_matricule?.length) {
@@ -216,7 +217,7 @@ export class CompareComponent implements OnInit {
     return [item.df1, item.df2, item.df3].some(arr => arr && arr.length > 1);
   }
 
-  
+
 
   // pour les manquants
   private simplifyMissing(arr: any[]): any[] {

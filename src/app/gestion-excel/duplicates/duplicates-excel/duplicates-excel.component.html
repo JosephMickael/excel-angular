@@ -33,32 +33,52 @@
             <tbody>
                 <ng-container *ngFor="let item of duplicates; let i = index">
                     <!-- Ligne principale -->
-                    <tr class="hover-row">
+                    <tr class="hover-row" [ngClass]="{'bg-info bg-opacity-10': opened[i]}">
                         <td class="fw-semibold text-muted">{{ i + 1 }}</td>
                         <td class="fw-semibold">{{ item.matricule }}</td>
-                        <td>{{ item.nom_prenom }}</td>
+                        <td>{{ item.nom_prenom | titlecase }}</td>
                         <td>{{ formatDate(item.date_naissance) }}</td>
                         <td><span class="badge bg-danger">{{ item.nombre_doublons }}</span></td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-light border" type="button" data-bs-toggle="collapse"
-                                [attr.data-bs-target]="'#collapse' + i" aria-expanded="false"
-                                [attr.aria-controls]="'collapse' + i">
-                                <i class="bi bi-chevron-down"></i>
+                            <button class="btn btn-sm btn-light border" type="button"
+                                (click)="onChevronClick(i, $event)" data-bs-toggle="collapse"
+                                [attr.data-bs-target]="'#collapse' + i" [attr.aria-controls]="'collapse' + i"
+                                [attr.aria-expanded]="opened[i] ? 'true' : 'false'">
+                                <i class="bi" [ngClass]="opened[i] ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                             </button>
                         </td>
                     </tr>
 
+
                     <!-- Détails doublons -->
                     <tr class="collapse bg-light" [id]="'collapse' + i">
                         <td colspan="7" class="p-3">
-                            <ul class="list-group list-group-flush">
-                                <li *ngFor="let d of item.doublons" class="list-group-item small">
-                                    <i class="bi bi-people text-primary me-2"></i>
-                                    <strong>{{ d.matricule }}</strong> — {{ d.nom_prenom }} —
-                                    <span class="text-muted">{{ d.id_personne || '-' }}</span> —
-                                    {{ formatDate(d.date_naissance) }}
-                                </li>
-                            </ul>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th><i class="bi bi-hash text-muted"></i></th>
+                                            <!-- <th><i class="bi bi-person-badge text-primary"></i> Matricule</th> -->
+                                            <th><i class="bi bi-person text-primary"></i> Nom & Prénom</th>
+                                            <th><i class="bi bi-card-heading text-primary"></i> ID Personne</th>
+                                            <th><i class="bi bi-calendar3 text-primary"></i> Date Naissance</th>
+                                            <th><i class="bi bi-building text-primary"></i> Employeur</th>
+                                            <th><i class="bi bi-diagram-3 text-primary"></i> Département</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let d of item.doublons; let j = index">
+                                            <td class="fw-semibold text-muted">{{ j + 1 }}</td>
+                                            <!-- <td class="fw-semibold">{{ d.matricule || '-' }}</td> -->
+                                            <td class="text-muted">{{ d.nom_prenom | titlecase }}</td>
+                                            <td class="text-muted">{{ d.id_personne || '-' }}</td>
+                                            <td>{{ formatDate(d.date_naissance) }}</td>
+                                            <td>{{ d.employeur || '-' }}</td>
+                                            <td>{{ d.departement || '-' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </td>
                     </tr>
                 </ng-container>

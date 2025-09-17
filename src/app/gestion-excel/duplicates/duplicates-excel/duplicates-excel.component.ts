@@ -17,7 +17,18 @@ export class DuplicatesExcelComponent {
 
   duplicates: any[] = [];
 
-  constructor(private duplicatesService : DuplicatesExcelService) {}
+  opened: boolean[] = [];
+
+  onChevronClick(index: number, ev: Event) {
+    ev.stopPropagation();
+    this.opened[index] = !this.opened[index];
+  }
+
+  // toggleAccordion(index: number) {
+  //   this.opened[index] = !this.opened[index];
+  // }
+
+  constructor(private duplicatesService: DuplicatesExcelService) { }
 
   onFileChange(event: any) {
     const file = event.target.files[0];
@@ -28,12 +39,12 @@ export class DuplicatesExcelComponent {
   }
 
   submitDuplicates() {
-    if (!this.file) return; 
+    if (!this.file) return;
 
     this.isLoading = true;
 
     this.duplicatesService.showDuplicates(this.file).subscribe({
-      next : (result: any) => {
+      next: (result: any) => {
         console.log("Doublons ==>", result)
 
         this.duplicates = result.duplicates;
@@ -50,10 +61,22 @@ export class DuplicatesExcelComponent {
   formatDate(value: string | null | undefined): string {
     if (!value) return '-';
 
+    // Cas ISO : "1989-08-12T00:00:00"
     if (value.includes('T')) {
       return value.split('T')[0];
     }
 
-    return value;
+    // Cas SQL-like : "1989-08-12 00:00:00"
+    if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/.test(value)) {
+      return value.split(' ')[0];
+    }
+
+    // Cas simple "1989-08-12"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    return value; // fallback : on affiche tel quel
   }
+
 }
