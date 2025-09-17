@@ -16,7 +16,7 @@
 /* Nav-pills sticky */
 .has-subnav .nav-pills {
     position: sticky;
-    top: -10px;
+    top: -8px;
     z-index: 20;
     background: #fff;
     border-bottom: 1px solid #dee2e6;

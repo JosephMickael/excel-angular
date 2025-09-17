@@ -55,6 +55,18 @@
 
           <!-- Cas same_name_diff_matricule -->
           <div *ngIf="tab.type === 'same'">
+            <!-- recherche -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" placeholder="Rechercher..."
+                    [(ngModel)]="searchQueries['same']" (input)="updatePagination(tab)">
+                </div>
+              </div>
+            </div>
+
+
             <div *ngFor="let item of getPagedData(tab); let i = index" class="card mb-3 shadow-sm">
               <div class="card-header fw-bold fs-5 text-muted">
                 {{ (currentPage - 1) * pageSize + i + 1 }}. {{ item.nom_prenom | titlecase }}
@@ -107,6 +119,13 @@
                 <button class="nav-link" id="pills-df3-tab" data-bs-toggle="pill" data-bs-target="#pills-df3"
                   type="button" role="tab">{{ file3Name | uppercase }}</button>
               </li>
+              <li class="ms-auto" style="flex:1; max-width:250px;">
+                <div class="input-group col-12">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" placeholder="Rechercher..."
+                    [(ngModel)]="searchQueries['missing']" (input)="updatePagination(tab)">
+                </div>
+              </li>
             </ul>
 
             <div class="tab-content">
@@ -150,8 +169,19 @@
             <div class="alert alert-info small mb-3">
               Liste des différences détectées colonne par colonne.
             </div>
+
+            <!-- Recherche -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" placeholder="Rechercher..." [(ngModel)]="searchDiffs">
+                </div>
+              </div>
+            </div>
+
             <div class="accordion mt-4" id="accordionDiffs">
-              <div class="accordion-item" *ngFor="let group of pagedDiffs; let i = index">
+              <div class="accordion-item" *ngFor="let group of filterDiffs(); let i = index">
                 <h2 class="accordion-header" id="heading{{ i }}">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                     [attr.data-bs-target]="'#collapse' + (i + (currentPage - 1) * pageSize)" aria-expanded="false">

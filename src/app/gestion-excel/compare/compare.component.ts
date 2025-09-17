@@ -2,10 +2,12 @@ import { Component, importProvidersFrom, OnInit } from '@angular/core';
 import { ComparisonService } from '../../services/compare/compare-excel.service';
 import { CommonModule } from '@angular/common';
 import { PaginationServiceService } from '../../services/pagination/pagination-service.service';
+import { SearchService } from '../../services/search/search.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-compare',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './compare.component.html',
   styleUrl: './compare.component.css',
   providers: [ComparisonService]
@@ -33,15 +35,88 @@ export class CompareComponent implements OnInit {
   pageSize = 50;   // nombre de lignes par page
   currentPage = 1;
 
+  totalPages: any;
+
   groupedDiffs: any[] = [];
   pagedDiffs: any[] = [];
 
   presenceMatrix: any[] = [];
 
-  constructor(private comparisonService: ComparisonService, private paginationService: PaginationServiceService) { }
+  searchQueries: { [key: string]: string } = {
+    same: '',
+    missing: ''
+  };
+
+  searchDiffs: string = '';
+
+  filteredResults: any = null;
+
+
+  constructor(
+    private comparisonService: ComparisonService,
+    private paginationService: PaginationServiceService,
+    private searchService: SearchService) { }
 
   ngOnInit() {
   }
+
+  // Recherche
+  filterData(tab: any, data: any[]): any[] {
+    const query = (this.searchQueries[tab.type] || '').toLowerCase().trim();
+    if (!query) return data;
+
+    return data.filter((item: any) =>
+      Object.values(item).some(val =>
+        val && val.toString().toLowerCase().includes(query)
+      )
+    );
+  }
+
+  filterDiffs(): any[] {
+    if (!this.pagedDiffs) return [];
+
+    const q = this.searchDiffs.toLowerCase().trim();
+    if (!q) return this.pagedDiffs; // pas de filtre
+
+    return this.pagedDiffs.filter((g: any) => {
+      const inKey = String(g?.key ?? '').toLowerCase().includes(q);
+
+      const inAnyDiff = Array.isArray(g?.differences) && g.differences.some((d: any) =>
+        [d?.column, d?.df1_value, d?.df2_value, d?.df3_value]
+          .some(v => v && String(v).toLowerCase().includes(q))
+      );
+
+      return inKey || inAnyDiff;
+    });
+  }
+
+  updatePagination(tab?: any) {
+    if (!tab || !tab.data) return;
+
+    let arr: any[] = [];
+
+    if (tab.type === 'missing') {
+      arr = [
+        ...(tab.data.df1 || []),
+        ...(tab.data.df2 || []),
+        ...(tab.data.df3 || [])
+      ];
+    } else {
+      arr = tab.data;
+    }
+
+    // Appliquer le filtre de recherche
+    arr = this.filterData(tab, arr);
+
+    // Calcul du nombre de pages
+    this.totalPages = Math.ceil(arr.length / this.pageSize);
+
+    // Si la page courante dépasse, revenir à 1
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+  }
+
 
   onFile1Change(event: any) {
     const file = event.target.files[0];
@@ -153,16 +228,26 @@ export class CompareComponent implements OnInit {
   getPagedData(tab: any, subKey?: string): any[] {
     if (!tab.data) return [];
 
+    // Récupère la query du tab courant
+    const query = (this.searchQueries[tab.type] || '').toLowerCase();
+
+    let arr: any[] = [];
+
     if (tab.type === 'missing' && subKey) {
-      const arr = tab.data[subKey] || [];
-      const start = (this.currentPage - 1) * this.pageSize;
-      const end = start + this.pageSize;
-      return arr.slice(start, end);
+      arr = tab.data[subKey] || [];
+    } else {
+      arr = tab.data || [];
+    }
+
+    if (query) {
+      arr = arr.filter(item =>
+        JSON.stringify(item).toLowerCase().includes(query)
+      );
     }
 
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
-    return tab.data.slice(start, end);
+    return arr.slice(start, end);
   }
 
   changePage(page: number) {
